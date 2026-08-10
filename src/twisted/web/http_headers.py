@@ -5,6 +5,7 @@
 """
 An API for storing HTTP header names and values.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping, Sequence
@@ -93,7 +94,7 @@ class Headers:
         """
         # pretty sure this type:ignore is a mypy bug:
         # https://github.com/python/mypy/issues/18279
-        return self.__class__(self._rawHeaders)  # type:ignore[arg-type]
+        return self.__class__(self._rawHeaders)  # type: ignore[arg-type]
 
     def hasHeader(self, name: AnyStr) -> bool:
         """
@@ -155,12 +156,10 @@ class Headers:
         )
 
     @overload
-    def getRawHeaders(self, name: AnyStr) -> Sequence[AnyStr] | None:
-        ...
+    def getRawHeaders(self, name: AnyStr) -> Sequence[AnyStr] | None: ...
 
     @overload
-    def getRawHeaders(self, name: AnyStr, default: _T) -> Sequence[AnyStr] | _T:
-        ...
+    def getRawHeaders(self, name: AnyStr, default: _T) -> Sequence[AnyStr] | _T: ...
 
     def getRawHeaders(
         self, name: AnyStr, default: _T | None = None

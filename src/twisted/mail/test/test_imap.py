@@ -6,6 +6,7 @@
 """
 Test case for twisted.mail.imap4
 """
+
 from __future__ import annotations
 
 import base64
@@ -7125,7 +7126,7 @@ class CopyWorkerTests(TestCase):
         return d.addCallback(cbCopy)
 
 
-@skipIf(not ClientTLSContext, "OpenSSL not present")  # type:ignore[truthy-function]
+@skipIf(not ClientTLSContext, "OpenSSL not present")  # type: ignore[truthy-function]
 @skipIf(not interfaces.IReactorSSL(reactor, None), "Reactor doesn't support SSL")
 class TLSTests(IMAP4HelperMixin, TestCase):
     serverCTX = None
