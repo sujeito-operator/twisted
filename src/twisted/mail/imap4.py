@@ -4594,13 +4594,17 @@ def Not(query):
 
 
 def wildcardToRegexp(wildcard: str, delim: str | None = None) -> re.Pattern[str]:
-    # Split on the two IMAP wildcards, escape everything else
-    parts = re.split(r"([*%])", wildcard)
+    # Split on runs of the two IMAP wildcards, escape everything else.  A run
+    # is collapsed into the single widest wildcard it is equivalent to: `*`
+    # subsumes `%`, and a repeated `%` is still bounded by the delimiter.
+    # Emitting one lazy quantifier per wildcard character instead would let the
+    # engine split the subject among them in exponentially many ways.
+    parts = re.split(r"([*%]+)", wildcard)
     result = []
     for p in parts:
-        if p == "*":
+        if "*" in p:
             result.append("(?:.*?)")
-        elif p == "%":
+        elif "%" in p:
             if delim is None:
                 result.append("(?:.*?)")
             else:

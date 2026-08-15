@@ -826,6 +826,40 @@ class IMAP4HelperTests(TestCase):
             for x in succeed:
                 self.assertTrue(wildcard.match(x), x)
 
+    def test_wildcardRunsCollapse(self) -> None:
+        """
+        A run of adjacent wildcards means what the widest single wildcard in it
+        means, and is compiled to exactly that: C{*} subsumes C{%}, and a
+        repeated C{%} is still bounded by the delimiter.
+
+        Compiling one lazy quantifier per wildcard character would instead let
+        the engine split the subject among them in exponentially many ways, so
+        C{LIST "" "********x"} -- a pattern containing no regular expression
+        syntax at all -- would stall the reactor.
+        """
+        for run, equivalent, delim in [
+            ("*" * 64, "*", "/"),
+            ("%%%", "%", "/"),
+            # A run holding a `*` crosses the delimiter, so it is a `*`.
+            ("%*%", "*", "/"),
+            # With no delimiter there is nothing for `%` to stop at.
+            ("%%", "%", None),
+        ]:
+            self.assertEqual(
+                imap4.wildcardToRegexp(f"foo/{run}/bar", delim).pattern,
+                imap4.wildcardToRegexp(f"foo/{equivalent}/bar", delim).pattern,
+                run,
+            )
+
+        # The collapsed pattern still selects the mailboxes it should.
+        stars = imap4.wildcardToRegexp("foo/" + "*" * 64 + "/bar", "/")
+        self.assertTrue(stars.match("foo/a/b/c/bar"))
+        self.assertFalse(stars.match("foo/a/b/c/baz"))
+
+        percents = imap4.wildcardToRegexp("foo/%%%/bar", "/")
+        self.assertTrue(percents.match("foo/xyz/bar"))
+        self.assertFalse(percents.match("foo/x/y/bar"))
+
     def test_headerFormatter(self):
         """
         L{imap4._formatHeaders} accepts a C{dict} of header name/value pairs and
